@@ -16,18 +16,33 @@ const propTypes = {
     hasPerm: PropTypes.func.isRequired,
   }).isRequired,
   availablePermissions: PropTypes.arrayOf(PropTypes.object),
-  usersPermissions: PropTypes.arrayOf(PropTypes.object),
-  viewUserProps: PropTypes.shape({
-    mutator: PropTypes.shape({
-      usersPermissions: PropTypes.shape({
-        POST: PropTypes.func.isRequired,
-        DELETE: PropTypes.func.isRequired,
-      }),
+  mutator: PropTypes.shape({
+    usersPermissions: PropTypes.shape({
+      POST: PropTypes.func.isRequired,
+      DELETE: PropTypes.func.isRequired,
     }),
+  }),
+  viewUserProps: PropTypes.shape({
   }),
 };
 
 class UserPermissions extends React.Component {
+  static manifest = Object.freeze({
+    usersPermissions: {
+      type: 'okapi',
+      records: 'permissionNames',
+      DELETE: {
+        pk: 'permissionName',
+        path: 'perms/users/:{x-username}/permissions',
+      },
+      GET: {
+        path: 'perms/users/:{y-username}/permissions?full=true',
+      },
+      path: 'perms/users/:{z-username}/permissions',
+      // We want to generate requests like: http://localhost:9130/perms/users/auth_test1/permissions?full=true
+    },
+  });
+
   constructor(props) {
     super(props);
     this.state = {
@@ -55,17 +70,17 @@ class UserPermissions extends React.Component {
   }
 
   addPermission(perm) {
-    this.props.viewUserProps.mutator.usersPermissions.POST(perm, this.props.viewUserProps).then(() => {
+    this.props.mutator.usersPermissions.POST(perm, this.props.viewUserProps).then(() => {
       this.onToggleAddPermDD();
     });
   }
 
   removePermission(perm) {
-    this.props.viewUserProps.mutator.usersPermissions.DELETE(perm, this.props.viewUserProps, perm.permissionName);
+    this.props.mutator.usersPermissions.DELETE(perm, this.props.viewUserProps, perm.permissionName);
   }
 
   isPermAvailable(perm) {
-    const permInUse = _.some(this.props.usersPermissions, perm);
+    const permInUse = _.some(this.props.data.usersPermissions, perm);
 
     // This should be replaced with proper search when possible.
     const nameToCompare = !perm.displayName ? perm.permissionName.toLowerCase() : perm.displayName.toLowerCase();
@@ -75,7 +90,7 @@ class UserPermissions extends React.Component {
   }
 
   render() {
-    const { usersPermissions } = this.props;
+    const { usersPermissions } = this.props.data;
 
     if (!this.props.stripes.hasPerm('perms.users.read'))
       return null;
