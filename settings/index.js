@@ -1,3 +1,5 @@
+// We have to remove node_modules/react to avoid having multiple copies loaded.
+// eslint-disable-next-line import/no-unresolved
 import React from 'react';
 
 import Paneset from '@folio/stripes-components/lib/Paneset';
@@ -9,6 +11,11 @@ import PermissionSets from './PermissionSets';
 import PatronGroupsSettings from './PatronGroupsSettings';
 
 class UsersSettings extends React.Component {
+  static propTypes = {
+    stripes: React.propTypes.shape({
+    }).isRequired,
+  }
+
   constructor(props) {
     super(props);
 
