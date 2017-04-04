@@ -68,7 +68,7 @@ const propTypes= {
 
 const defaultProps = {
   createButtonLabel: '+ Add Item',
-  actionSuppression: { delete : (item) => true, edit: (item) => true, },
+  actionSuppression: { delete : () => true, edit: () => true, },
   uniqueField: '_id',
 }
 
@@ -84,7 +84,7 @@ class PatronGroupsList extends React.Component{
       editArray: [],
     };
 
-    this.actionSuppression = { delete : (item) => false, edit: (item) => false, };
+    this.actionSuppression = { delete : () => false, edit: () => false, };
 
     this.editingRow = null;
     this.editingItem = '';
@@ -146,7 +146,7 @@ class PatronGroupsList extends React.Component{
 
   handleAddClick(){
     let newTempObject = {};
-    for(var k in this.props.itemTemplate){ newTempObject[k] = ''};
+    for(var k of Object.keys(this.props.itemTemplate)){ newTempObject[k] = ''};
     newTempObject[this.props.uniqueField] = this.state.creatingArray.length.toString();
 
     let tempArray = this.state.creatingArray;
@@ -230,13 +230,13 @@ class PatronGroupsList extends React.Component{
     visibleFields.forEach(
       (field) => {
         const fieldContent = <TextField
-            value={this.state.creatingArray[editingIndex][field]}
-            onChange={this.handleCreateFieldChange}
-            placeholder={(field === 'desc') ? 'description' : field}
-            name={field}
-            onFocus={this.handleCreateFieldFocus}
-            fullWidth
-          />;
+          value={this.state.creatingArray[editingIndex][field]}
+          onChange={this.handleCreateFieldChange}
+          placeholder={(field === 'desc') ? 'description' : field}
+          name={field}
+          onFocus={this.handleCreateFieldFocus}
+          fullWidth
+        />;
         const renderedField = (
           <div key={field || 'e'} style={fieldStyle}>
             {fieldContent}
@@ -432,7 +432,7 @@ class PatronGroupsList extends React.Component{
         <Row>
           <Col xs={12}>
             <List items={this.state.creatingArray} itemFormatter={this.CreateItemFormatter} isEmptyMessage={''} marginBottom0 />
-            <List items={_.sortBy(contentData, [(g) => g.group.toLowerCase()] )} itemFormatter={this.EditItemFormatter} isEmptyMessage={isEmptyMessage} />
+            <List items={_.sortBy(contentData, [g => g.group.toLowerCase()] )} itemFormatter={this.EditItemFormatter} isEmptyMessage={isEmptyMessage} />
           </Col>
         </Row>
       </div>
