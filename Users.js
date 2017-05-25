@@ -23,6 +23,7 @@ import IfPermission from '@folio/stripes-components/lib/IfPermission';
 
 import UserForm from './UserForm';
 import ViewUser from './ViewUser';
+import ShowAllPerms from './ShowAllPerms';
 
 const INITIAL_RESULT_COUNT = 30;
 const RESULT_COUNT_INCREMENT = 30;
@@ -126,12 +127,14 @@ class Users extends React.Component {
       selectedItem: {},
       searchTerm: query.query || '',
       sortOrder: query.sort || '',
+      showAllPerms: query.showAllPerms,
     };
 
     this.okapi = props.okapi;
 
     this.commonChangeFilter = commonChangeFilter.bind(this);
     this.transitionToParams = transitionToParams.bind(this);
+    this.connectedShowAllPerms = props.stripes.connect(ShowAllPerms);
     this.connectedViewUser = props.stripes.connect(ViewUser);
     const logger = props.stripes.logger;
     this.log = logger.log.bind(logger);
@@ -152,6 +155,12 @@ class Users extends React.Component {
     this.log('action', 'cleared search');
     this.setState({ searchTerm: '' });
     this.props.history.push(this.props.location.pathname);
+  }
+
+  onShowAllPerms = () => {
+    this.log('action', 'showing all perms');
+    this.setState({ showAllPerms: true });
+    this.transitionToParams({ showAllPerms: true });
   }
 
   onSort = (e, meta) => {
@@ -264,6 +273,9 @@ class Users extends React.Component {
     const { data, stripes } = this.props;
     const users = data.users || [];
 
+    if (this.state.showAllPerms)
+      return <this.connectedShowAllPerms stripes={stripes} />;
+
     /* searchHeader is a 'custom pane header'*/
     const searchHeader = <FilterPaneSearch id="SearchField" onChange={this.onChangeSearch} onClear={this.onClearSearch} value={this.state.searchTerm} />;
     const resultMenu = <PaneMenu><button><Icon icon="bookmark" /></button></PaneMenu>;
@@ -313,6 +325,7 @@ class Users extends React.Component {
                 </IfPermission>
               </IfPermission>
             </IfPermission>
+            <Button fullWidth onClick={this.onShowAllPerms}>Show all perms</Button>
           </FilterControlGroup>
         </Pane>
         {/* Results Pane */}
