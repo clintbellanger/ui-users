@@ -22,7 +22,7 @@ class ShowAllPerms extends React.Component {
     users2: {
       type: 'okapi',
       records: 'users',
-      path: 'users?limit=3&query=username=d* sortby personal.lastName',
+      path: 'users?limit=3&query=username=a* sortby personal.lastName',
     },
   });
 
