@@ -48,7 +48,7 @@ class ShowAllPerms extends React.Component {
           </thead>
           <tbody>
             {(this.props.data.users2 || []).map((user, index) =>
-              <this.connectedUser key={index} stripes={this.props.stripes} index={index} user={user} />)}
+              <this.connectedUser key={index} dataKey={user.username} stripes={this.props.stripes} index={index} user={user} />)}
           </tbody>
         </table>
       </div>
