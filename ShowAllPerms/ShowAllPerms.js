@@ -1,7 +1,7 @@
 // We have to remove node_modules/react to avoid having multiple copies loaded.
 // eslint-disable-next-line import/no-unresolved
 import React, { PropTypes } from 'react';
-import css from '@folio/stripes-components/lib/MultiColumnList/MultiColumnList.css';
+import css from '@folio/stripes-components/lib/MultiColumnList/MCLRenderer.css';
 import User from './User';
 
 class ShowAllPerms extends React.Component {
