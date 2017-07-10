@@ -1,9 +1,8 @@
-// We have to remove node_modules/react to avoid having multiple copies loaded.
-// eslint-disable-next-line import/no-unresolved
+import _ from 'lodash';
 import React from 'react';
 import Settings from '@folio/stripes-components/lib/Settings';
 
-import PermissionSets from './PermissionSets';
+import PermissionSets from './permissions/PermissionSets';
 import PatronGroupsSettings from './PatronGroupsSettings';
 
 const pages = [
@@ -21,4 +20,4 @@ const pages = [
   },
 ];
 
-export default props => <Settings {...props} pages={_.sortBy(pages, ['label'])} />;
+export default props => <Settings {...props} pages={_.sortBy(pages, ['label'])} paneTitle="Users" />;

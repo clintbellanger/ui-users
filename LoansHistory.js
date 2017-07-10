@@ -1,13 +1,12 @@
 import _ from 'lodash';
-// We have to remove node_modules/react to avoid having multiple copies loaded.
-// eslint-disable-next-line import/no-unresolved
-import React, { Component, PropTypes } from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import Paneset from '@folio/stripes-components/lib/Paneset';
 import Pane from '@folio/stripes-components/lib/Pane';
 import PaneMenu from '@folio/stripes-components/lib/PaneMenu';
 import MultiColumnList from '@folio/stripes-components/lib/MultiColumnList';
 
-class LoansHistory extends Component {
+class LoansHistory extends React.Component {
 
   static propTypes = {
     stripes: PropTypes.shape({
@@ -34,7 +33,7 @@ class LoansHistory extends Component {
       type: 'okapi',
       records: 'loans',
       GET: {
-        path: 'circulation/loans?query=(userId=${userid})',
+        path: 'circulation/loans?query=(userId=%{userid})',
       },
     },
     userid: {},

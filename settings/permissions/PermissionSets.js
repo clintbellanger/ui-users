@@ -1,6 +1,6 @@
-// We have to remove node_modules/react to avoid having multiple copies loaded.
-// eslint-disable-next-line import/no-unresolved
-import React, { Component, PropTypes } from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
+
 import _ from 'lodash';
 
 import Paneset from '@folio/stripes-components/lib/Paneset';
@@ -12,8 +12,9 @@ import NavListSection from '@folio/stripes-components/lib/NavListSection';
 import IfPermission from '@folio/stripes-components/lib/IfPermission';
 import PermissionSetDetails from './PermissionSetDetails';
 
-class PermissionSets extends Component {
+class PermissionSets extends React.Component {
   static propTypes = {
+    label: PropTypes.string.isRequired,
     stripes: PropTypes.shape({
       hasPerm: PropTypes.func.isRequired,
     }).isRequired,
@@ -24,7 +25,6 @@ class PermissionSets extends Component {
       permissionSets: PropTypes.shape({
         POST: PropTypes.func,
         DELETE: PropTypes.func,
-        GET: PropTypes.func,
       }),
     }).isRequired,
   };
@@ -40,7 +40,7 @@ class PermissionSets extends Component {
         path: 'perms/permissions',
       },
       GET: {
-        path: 'perms/permissions?length=100&query=(mutable=true)',
+        path: 'perms/permissions?length=1000&query=(mutable=true)&expandSubs=true',
       },
       path: 'perms/permissions',
     },
@@ -50,37 +50,59 @@ class PermissionSets extends Component {
     super(props);
 
     // 'Manager' just for example...
+
     this.state = {
       selectedSet: null,
     };
+
+    this.navList = null;
 
     this.onSelectSet = this.onSelectSet.bind(this);
     this.createNewPermissionSet = this.createNewPermissionSet.bind(this);
     this.clearSelection = this.clearSelection.bind(this);
   }
 
+  componentDidUpdate(prevProps) {
+    const permSetsDiffs = _.differenceBy(this.props.data.permissionSets, prevProps.data.permissionSets, 'id');
+    const newPermSet = permSetsDiffs[0];
+
+    if (newPermSet && !newPermSet.pendingCreate) {
+      // At this point in the lifecycle the CID is still on the object, and
+      // this messes up the saveing of the Permission Set. It should not be needed any longer
+      // and will be removed.
+      delete newPermSet._cid; // eslint-disable-line no-underscore-dangle
+
+      // Jeremy has investigated that and confirmed that it is harmless.
+      // eslint-disable-next-line react/no-did-update-set-state
+      this.setState({
+        selectedSet: newPermSet,
+      });
+    }
+  }
+
   onSelectSet(e) {
     e.preventDefault();
-    const href = e.target.href;
-    const permissionName = href.substring(href.indexOf('#') + 1);
-    let selectedSet = null;
+    const permissionId = e.target.dataset.id;
     _.forEach(this.props.data.permissionSets, (set) => {
-      if (set.permissionName === permissionName) selectedSet = set;
+      if (set.id === permissionId) {
+        this.setSelectedSet(set);
+      }
     });
-    this.setState({ selectedSet });
+  }
+
+  setSelectedSet(set) {
+    this.setState({
+      selectedSet: set,
+    });
+  }
+
+  clearSelection() {
+    this.setSelectedSet(null);
   }
 
   createNewPermissionSet() {
     this.props.mutator.permissionSets.POST({
       mutable: true,
-    }).then(() => {
-      this.clearSelection();
-    });
-  }
-
-  clearSelection() {
-    this.setState({
-      selectedSet: null,
     });
   }
 
@@ -90,9 +112,9 @@ class PermissionSets extends Component {
     ) : [];
 
     const PermissionsSetsLastMenu = (
-      <IfPermission {...this.props} perm="perms.permissions.item.post">
+      <IfPermission perm="perms.permissions.item.post">
         {/* In practice, there is point letting someone create a set if they can't set its name */}
-        <IfPermission {...this.props} perm="perms.permissions.item.put">
+        <IfPermission perm="perms.permissions.item.put">
           <PaneMenu>
             <button title="Add Permission Set" onClick={this.createNewPermissionSet}>
               <Icon icon="plus-sign" />
@@ -104,14 +126,15 @@ class PermissionSets extends Component {
 
     return (
       <Paneset nested>
-        <Pane defaultWidth="20%" lastMenu={PermissionsSetsLastMenu}>
+        <Pane defaultWidth="25%" lastMenu={PermissionsSetsLastMenu} paneTitle={this.props.label}>
           <NavList>
-            <NavListSection activeLink={this.state.selectedSet ? `#${this.state.selectedSet.title}` : ''}>
+            <NavListSection activeLink={this.state.selectedSet ? `#${this.state.selectedSet.id}` : ''}>
               {RenderedPermissionSets}
             </NavListSection>
           </NavList>
         </Pane>
-        {this.state.selectedSet && <PermissionSetDetails parentMutator={this.props.mutator} clearSelection={this.clearSelection} stripes={this.props.stripes} initialValues={this.state.selectedSet} selectedSet={this.state.selectedSet} />}
+        {this.state.newSet && <PermissionSetDetails parentMutator={this.props.mutator} clearSelection={this.clearSelection} stripes={this.props.stripes} selectedSet={{}} initialValues={{}} tellParentTheRecordHasBeenCreated={this.recordHasBeenCreated} />}
+        {this.state.selectedSet && !this.state.newSet && <PermissionSetDetails parentMutator={this.props.mutator} clearSelection={this.clearSelection} stripes={this.props.stripes} initialValues={this.state.selectedSet} selectedSet={this.state.selectedSet} />}
       </Paneset>
     );
   }
