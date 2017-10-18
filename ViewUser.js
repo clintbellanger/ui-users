@@ -411,6 +411,8 @@ class ViewUser extends React.Component {
         </IfPermission>
         <Layer isOpen={query.layer ? query.layer === 'edit' : false} label="Edit User Dialog">
           <UserForm
+            stripes={this.props.stripes}
+            resources={this.props.resources}
             initialValues={userFormData}
             addressTypes={this.props.addressTypes}
             onSubmit={(record) => { this.update(record); }}

@@ -508,6 +508,8 @@ class Users extends React.Component {
           <UserForm
             id="userform-adduser"
             initialValues={{ active: true, personal: { preferredContactTypeId: '002' } }}
+            stripes={this.props.stripes}
+            resources={this.props.resources}            
             addressTypes={addressTypes}
             onSubmit={(record) => { this.create(record); }}
             onCancel={this.onClickCloseNewUser}

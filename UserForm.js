@@ -16,11 +16,16 @@ import fetch from 'isomorphic-fetch';
 import { Field } from 'redux-form';
 import stripesForm from '@folio/stripes-form';
 import classNames from 'classnames';
-
 import { countriesOptions } from './data/countries';
 import Autocomplete from './lib/Autocomplete';
 import { toAddressTypeOptions } from './converters/address_type';
 import css from './UserForm.css';
+
+// cpb imports
+import IfPermission from '@folio/stripes-components/lib/IfPermission';
+import IfInterface from '@folio/stripes-components/lib/IfInterface';
+import UserPermissions from './UserPermissions';
+import ProxyPermissions from './ProxyPermissions';
 
 const sys = require('stripes-loader'); // eslint-disable-line
 const okapiUrl = sys.okapi.url;
@@ -80,6 +85,15 @@ function asyncValidate(values, dispatch, props, blurredField) {
 class UserForm extends React.Component {
 
   static propTypes = {
+    stripes: PropTypes.shape({
+      connect: PropTypes.func.isRequired,
+    }).isRequired,
+    resources: PropTypes.shape({
+      user: PropTypes.arrayOf(PropTypes.object),
+      patronGroups: PropTypes.shape({
+        records: PropTypes.arrayOf(PropTypes.object),
+      }),
+    }),     
     onClose: PropTypes.func, // eslint-disable-line react/no-unused-prop-types
     newUser: PropTypes.bool, // eslint-disable-line react/no-unused-prop-types
     handleSubmit: PropTypes.func.isRequired,
@@ -99,7 +113,22 @@ class UserForm extends React.Component {
   constructor(props) {
     super(props);
     okapiToken = props.okapi.token;
-    this.state = { showPassword: false };
+        
+    this.state = {
+      showPassword: false,
+      lastUpdate: null,
+      sections: {
+        infoSection: true,
+        addressSection: true,
+        proxySection: true,
+        permissionsSection: true,
+      },
+    };
+    
+    // cpb
+    this.connectedUserPermissions = props.stripes.connect(UserPermissions);
+    this.connectedProxyPermissions = props.stripes.connect(ProxyPermissions);    
+    
   }
 
   togglePassword() {
@@ -107,7 +136,15 @@ class UserForm extends React.Component {
       showPassword: !this.state.showPassword,
     });
   }
-
+  
+ // TEMP borrowed from ViewUser 
+  getUser() {
+    const { resources, match: { params: { userid } } } = this.props;
+    const selUser = (resources.selUser || {}).records || [];
+    if (!selUser || selUser.length === 0 || !userid) return null;
+    return selUser.find(u => u.id === userid);
+  }  
+  
   render() {
     const {
       handleSubmit,
@@ -134,6 +171,8 @@ class UserForm extends React.Component {
       addressType: { component: Select, props: { dataOptions: toAddressTypeOptions(addressTypes), fullWidth: true, placeholder: 'Select address type' } },
     };
 
+    const user = this.getUser();
+    
     return (
       <form className={css.UserFormRoot} id="form-user">
         <Paneset isRoot>
@@ -210,8 +249,34 @@ class UserForm extends React.Component {
                 <Field label="External System ID" name="externalSystemId" id="adduser_externalsystemid" component={TextField} fullWidth />
 
                 <AddressEditList name="personal.addresses" fieldComponents={addressFields} canDelete />
+            
+                <this.connectedProxyPermissions
+                  user={user}
+                  stripes={this.props.stripes}
+                  match={this.props.match}
+                  expanded={this.state.sections.proxySection}
+                  onToggle={this.handleSectionToggle}
+                  accordionId="proxySection"
+                  editable
+                  {...this.props}
+                />
+                <IfPermission perm="perms.users.get">
+                  <IfInterface name="permissions" version="5.0">
+                    <this.connectedUserPermissions
+                      stripes={this.props.stripes}
+                      match={this.props.match}
+                      expanded={this.state.sections.permissionsSection}
+                      onToggle={this.handleSectionToggle}
+                      accordionId="permissionsSection"
+                      editable
+                      {...this.props}
+                    />
+                  </IfInterface>
+                </IfPermission>
+
               </Col>
             </Row>
+            
           </Pane>
         </Paneset>
       </form>
